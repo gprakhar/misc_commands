@@ -1,0 +1,19 @@
+to test an ISO:
+qemu -m 512M -cdrom Fedora-18-x86_64-Live-Desktop/Fedora-18-x86_64-Live-Desktop.iso
+
+to create a virt-HDD:
+qemu-img create qemu-fedora18-x86-10G.qcow 10G
+
+
+to install system:
+qemu-system-x86_64 -cdrom /media/storage/software/ISO/Fedora-18-x86_64-Live-Desktop/Fedora-18-x86_64-Live-Desktop.iso -hda qemu-fedora18-x86-10G.qcow -boot d -net nic -net user -m 1024 -localtime
+
+
+to run the VM:
+qemu-system-x86_64 qemu-fedora18-x86-10G.qcow -boot c -net nic -net user -m <RAM_size_MB> -localtime -smp <number_of_processors>
+
+
+qemu-system-x86_64 -hda /media/storage/Virt_HDD/debian-7.2.0-amd64-30G.qcow -m 5120 -smp 4 -device e1000,netdev=user.0 -netdev user,id=user.0,hostfwd=tcp::5555-:22
+
+
+qemu-system-x86_64 -hda /media/storage/Virt_HDD/debian-7.2.0-amd64-30G.qcow -m 5120 -smp 4 -device e1000,netdev=net0,mac=DE:AD:BE:EF:78:C2 -netdev tap,id=net0,script=/home/prakhar/temp/debian_qemu_VM_network-Bridge/qemu_ifup.sh
