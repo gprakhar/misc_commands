@@ -1,0 +1,10 @@
+$nmcli con up uuid ef1c7289-071f-4fed-bab0-68407936d9ae 
+
+to check ststus of open connection
+$nmcli con status
+
+to see devices
+$nmcli dev
+
+to see conentions
+$nmcli con
