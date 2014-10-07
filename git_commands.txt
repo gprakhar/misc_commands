@@ -1,0 +1,11 @@
+#command to show, Unpushed git commits
+$git log origin/master..HEAD
+
+#command to know details about recent commits
+$git log
+
+#command to list out what a particular commit did
+$git show <commit-id>
+
+#command to list out in diff style what happned in a merge
+#git show -m
