@@ -8,4 +8,10 @@ $git log
 $git show <commit-id>
 
 #command to list out in diff style what happned in a merge
-#git show -m
+$git show -m
+
+#to add a particular file extension to git for ignoring it
+#eg. to ignore vim swap file, foo.py.swp
+#add "*.swp" to
+.git/info/exclude
+#in your repo folder
