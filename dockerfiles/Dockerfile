@@ -11,7 +11,7 @@ ENV DEBIAN_FRONTEND noninteractive
 
 ################## BEGIN INSTALLATION ######################
 
-#RUN apt-get update -y
+RUN apt-get update 
 #RUN apt-get upgrade -y
 
 
