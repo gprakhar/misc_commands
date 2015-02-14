@@ -1,0 +1,8 @@
+##Infomartion about how to edit audio files
+
+1. http://www.clipconverter.cc ## this website CAN be used for downloaing youtube videos
+
+2. 'Audacity' Open source tool for editing audio files, stitching, podcats, overlaying etc
+
+3. 'Winff' open source tool for converting video file formats and resolutions
+
