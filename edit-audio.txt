@@ -1,4 +1,5 @@
 ##Infomartion about how to edit audio files
+## Add details how to use Audacity
 
 1. http://www.clipconverter.cc ## this website CAN be used for downloaing youtube videos
 
