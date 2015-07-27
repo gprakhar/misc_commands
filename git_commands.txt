@@ -1,17 +1,28 @@
-#command to show, Unpushed git commits
+#1# command to show, Unpushed git commits
 $git log origin/master..HEAD
 
-#command to know details about recent commits
+#2# command to know details about recent commits
 $git log
 
-#command to list out what a particular commit did
+#3# command to list out what a particular commit did
 $git show <commit-id>
 
-#command to list out in diff style what happned in a merge
+#4# command to list out in diff style what happned in a merge
 $git show -m
 
-#to add a particular file extension to git for ignoring it
+#5# to add a particular file extension to git for ignoring it
+$vim .gitignore #edit file to add name for file to be ignored
+OR
 #eg. to ignore vim swap file, foo.py.swp
 #add "*.swp" to
-.git/info/exclude
-#in your repo folder
+.git/info/exclude #in your repo folder
+
+#6# to create a new repo out of existing one (using some or all of the old code)
+#create the new repo in online github account
+#if old repo has more than one branch, checkout to master
+#go to old repo folder
+$git push ssh://my_host/new_repo +origin:master
+#checkout to next branch of old repo
+$git push ssh://my_host/new_repo +old-branch1:new-branch1
+#do this for all branches
+#finally pull the code to local system, into new repo folder
