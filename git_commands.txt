@@ -28,5 +28,7 @@ $git push ssh://my_host/new_repo +old-branch1:new-branch1
 #do this for all branches
 #finally pull the code to local system, into new repo folder
 
+#7# to see uncommited changes, by diff from last commit
+$git diff <branchname>
 
 
