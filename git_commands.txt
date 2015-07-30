@@ -1,5 +1,6 @@
 #1# command to show, Unpushed git commits
-$git log origin/master..HEAD
+$git log origin/<branchName>..HEAD #to display only commit meta data and comment
+$git log origin/<branchName>..HEAD #to display current unpushed commits diff with last commit
 
 #2# command to know details about recent commits
 $git log
@@ -27,8 +28,5 @@ $git push ssh://my_host/new_repo +old-branch1:new-branch1
 #do this for all branches
 #finally pull the code to local system, into new repo folder
 
-#7# to show unpused commits in local repo
-$git log origin/<branchName>..HEAD #to display only commit meta data and comment
-$git log origin/<branchName>..HEAD #to display current unpushed commits diff with last commit"
 
 
