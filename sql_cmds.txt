@@ -1,3 +1,6 @@
+
+Cohort analysis:
+
 Step 1.
 CREATE TABLE Sep_Week6to10_Habits_mf_event_data (event_label varchar, user_id int8, date_of_event date, hour_of_event int, minute_of_event int, total_events int, unique_events int);
 
@@ -9,16 +12,25 @@ COPY sep_week6to10_habits_mf_event_data FROM '/vagrant/datasets/Sep-Week6-10_Hab
 copy cohort user_id csv too
 
 Step 3.
-CREATE TABLE cohort1_events_Nov_Week15to18 AS (SELECT Nov_Week15to18_habits_mf_event_data.user_id, Nov_Week15to18_habits_mf_event_data.event_label, Nov_Week15to18_habits_mf_event_data.date_of_event, Nov_Week15to18_habits_mf_event_data.hour_of_event, Nov_Week15to18_habits_mf_event_data.minute_of_event, Nov_Week15to18_habits_mf_event_data.unique_events FROM Nov_Week15to18_habits_mf_event_data, cohort1_aug_week1_user_id WHERE cohort1_aug_week1_user_id.user_id = Nov_Week15to18_habits_mf_event_data.user_id);
+combine all the month tables for a single type of event
+CREATE TABLE Week1to18_AugtoNov_habits_mf_event_data AS (SELECT * FROM aug_week1to4_habits_mf_event_data UNION ALL SELECT * FROM sep_week6to10_habits_mf_event_data UNION ALL SELECT * FROM oct_week11to14_habits_mf_event_data UNION ALL SELECT * FROM nov_week15to18_habits_mf_event_data) ;
 
 Step 4.
+CREATE TABLE cohort1_events_Nov_Week15to18  AS (SELECT Nov_Week15to18_habits_mf_event_data.user_id, Nov_Week15to18_habits_mf_event_data.event_label, Nov_Week15to18_habits_mf_event_data.date_of_event, Nov_Week15to18_habits_mf_event_data.hour_of_event, Nov_Week15to18_habits_mf_event_data.minute_of_event, Nov_Week15to18_habits_mf_event_data.unique_events FROM Nov_Week15to18_habits_mf_event_data, cohort1_aug_week1_user_id WHERE cohort1_aug_week1_user_id.user_id = Nov_Week15to18_habits_mf_event_data.user_id);
+
+Step 5.
 CREATE TABLE cohort1_Week15to18_results AS (SELECT event_label, COUNT (DISTINCT user_id) FROM cohort1_events_Nov_Week15to18 GROUP BY event_label ORDER BY event_label);
 
 
-OR COMBINE Step 3 & 4 and do this:
+OR COMBINE Step 4 & 5 and do this:
 
-Step 3+4.
+Step 4+5.
 SELECT event_label, COUNT (DISTINCT user_id) FROM aug_week1to4_habits_mf_event_data WHERE user_id IN (SELECT user_id FROM cohort1_aug_week1_user_id) GROUP BY event_label ORDER BY event_label;
+
+CREATE TABLE cohort3_events_AugtoNov_results AS (SELECT event_label, COUNT (DISTINCT user_id) FROM week1to18_augtonov_habits_mf_event_data WHERE week1to18_augtonov_habits_mf_event_data.user_id IN (SELECT user_id FROM cohort3_augweek3_user_id_list ) GROUP BY event_label ORDER BY event_label);
+
+STEP 6.
+COPY cohort_3_augtonov_week1to18_localnotif_read TO '/tmp/cohort3_localnotif_read_byWeek.csv' DELIMITER ',' CSV HEADER;
 
 ------------------------------------------------
 Count queries:
@@ -30,4 +42,12 @@ Count queries:
 # SELECT COUNT (USER_ID) AS SS FROM aug_week1to4_habits_mf_event_data;
 
 -----------------
+Aggregate by week Queries
 
+# SELECT date_trunc('week', date_of_event) AS "Week", SUM (unique_events) as totals FROM cohort_3_augtonov_week1to18_localnotif_read GROUP BY 1 ORDER BY 1;
+
+-----
+Create New tables with auto ranges of 
+
+# SELECT  date_of::date FROM generate_series('2016-08-01', '2016-08-31', '1 day'::interval) date_of;
+# ALTER TABLE test_date_week_group ADD COLUMN value int NOT NULL DEFAULT 1;
