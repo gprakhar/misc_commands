@@ -1,0 +1,9 @@
+1. For Lessons
+awk -F, '{printf("%s,%.3g\n",$1,($3/$2)*100)}' cohort3_lessons_started_completed_byWeek.csv > cohort3_lessons_completed-rate_byWeek.csv
+awk -F, '{printf("%s,%s,%.3g\n",$1,$2,($4/$3)*100)}' cohort3_week-name_lesson-ID_started-completed_byWeek-byLabel.csv > cohort3_week-name_lesson-ID_complete-rate_byWeek-byLabel.csv
+
+2. For Msg flow
+awk -F, '{printf("%s,%.3g\n",$1,($3/$2)*100)}' cohort3_msg-flow_read_sent_byDay.csv > cohort3_msg-flow_completed_rate_byDay.csv
+
+3. For Notifications
+awk -F, '{printf("%s,%.3g\n",$1,($3/$2)*100)}' cohort3_localnotif_read_sent_byWeek.csv > cohort3_localnotif_read-rate_byWeek.csv

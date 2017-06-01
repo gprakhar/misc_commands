@@ -1,0 +1,82 @@
+Step 1: create table
+CREATE TABLE AugtoNov_Week1to18_localNotif_read (event_label varchar, user_id int8, date_of_event date, hour_of_event int, minute_of_event int, total_events int, unique_events int);
+
+Step 2: copy data into table
+COPY AugtoNov_Week1to18_localNotif_read  FROM '/vagrant/datasets/pushNotifLocal/AugtoNov_Week1to18_localNotif_read.csv' DELIMITER ',' CSV;
+
+Step 3: create another table ONLY with user_id in cohort
+CREATE TABLE cohort_3_AugtoNov_Week1to18_localNotif_read AS (SELECT event_label, user_id, date_of_event, hour_of_event, unique_events FROM AugtoNov_Week1to18_localNotif_read WHERE AugtoNov_Week1to18_localNotif_read.user_id IN (SELECT user_id FROM cohort3_augweek3_user_id_list ));
+
+Step 4: create groups by Week followed by event_label
+SELECT date_trunc('week', date_of_event) AS Week, event_label, SUM (unique_events) as totals FROM cohort_3_augtonov_week1to18_localnotif_sent GROUP BY 1, event_label ORDER BY 1, event_label;
+
+Step 4.1: Join the sent/read OR started/completed table do this in combination with step 4
+WITH
+sent_table AS (SELECT date_trunc('week', date_of_event) AS Week, event_label, SUM (unique_events) as totals FROM cohort_3_augtonov_week1to18_localnotif_sent GROUP BY 1, event_label ORDER BY 1, event_label),
+read_table AS (SELECT date_trunc('week', date_of_event) AS Week, event_label, SUM (unique_events) as totals FROM cohort_3_augtonov_week1to18_localnotif_read GROUP BY 1, event_label ORDER BY 1, event_label)
+SELECT COALESCE(s.Week, r.Week, current_timestamp) AS week_of_program, COALESCE(s.event_label, r.event_label, '0') AS event_label, s.totals AS sent_events, r.totals AS read_events         
+FROM sent_table s                                                                                                                                                   
+FULL OUTER JOIN read_table r ON s.Week = r.Week AND s.event_label=r.event_label;
+
+Step 5: Export results table to CSV this in combination with step 4.1
+COPY (WITH
+sent_table AS (SELECT date_trunc('week', date_of_event) AS Week, event_label, SUM (unique_events) as totals FROM cohort_3_augtonov_week1to18_localnotif_sent GROUP BY 1, event_label ORDER BY 1, event_label),
+read_table AS (SELECT date_trunc('week', date_of_event) AS Week, event_label, SUM (unique_events) as totals FROM cohort_3_augtonov_week1to18_localnotif_read GROUP BY 1, event_label ORDER BY 1, event_label)
+SELECT COALESCE(s.Week, r.Week, current_timestamp) AS week_of_program, COALESCE(s.event_label, r.event_label, '0') AS event_label, s.totals AS sent_events, r.totals AS read_events         
+FROM sent_table s                                                                                                                                                   
+FULL OUTER JOIN read_table r ON s.Week = r.Week AND s.event_label=r.event_label) TO '/tmp/cohort3_localnotif_read_sent_byWeek_byLabel.csv' DELIMITER ',' CSV HEADER;
+
+
+---------------------------------
+-For day wise colated events, with no labels, 
+WITH sent_table AS ( SELECT date_trunc('day', date_of_event) AS day, SUM (unique_events) as totals FROM cohort_3_augtonov_week1to18_localnotif_sent WHERE date_of_event::date<'2016-08-22' GROUP BY day ORDER BY day), read_table AS (SELECT date_trunc('day', date_of_event) AS day, SUM (unique_events) as totals FROM cohort_3_augtonov_week1to18_localnotif_read WHERE date_of_event::date<'2016-08-22' GROUP BY day ORDER BY day) SELECT COALESCE(s.day, r.day,current_timestamp) as day_of_program, s.totals AS sent_events, r.totals AS read_events FROM sent_table s FULL OUTER JOIN read_table r ON s.day=r.day TO '/tmp/cohort3_localnotif_read_sent_byDay.csv' DELIMITER ',' CSV HEADER;
+
+--------------------------------
+-For sessions for a particular Cohort, group by hour_of_event
+CREATE TABLE cohort_3_AugtoNov_Week1to18_sessions AS (SELECT hour_of_event, user_id, number_sessions, avg_session_duration FROM AugtoNov_Week1to18_sessions WHERE AugtoNov_Week1to18_sessions.user_id IN (SELECT user_id FROM cohort3_augweek3_user_id_list ));
+
+SELECT hour_of_event, SUM(number_sessions) FROM cohort_3_AugtoNov_Week1to18_sessions GROUP BY hour_of_event ORDER BY hour_of_event;
+-------------------------------
+- For coach messages, to filter out the questions that users asked from backend
+
+WITH patient_users as (SELECT user_id FROM auth_user_groups WHERE group_id=2)
+SELECT sender_id, body FROM postman_message WHERE postman_message.sender_id IN (SELECT user_id FROM patient_users) AND moderation_reason NOT ILIKE 'client_generated' AND char_length(body)>12 order by id asc;
+-----------------------------
+- For getting name, email, ph number of user_id present in a list
+CREATE TABLE coach_msg_userid_name_email_phnumber AS (WITH name_email_list AS (SELECT id, first_name, last_name, email FROM auth_user WHERE id IN (SELECT user_id FROM coach_msg_listuser_id_aug2016_jan2017) AND email NOT ILIKE '%mailinator%' AND email NOT ILIKE '%janacare%')
+SELECT name_email_list.id, name_email_list.first_name, name_email_list.last_name, name_email_list.email, phone_number FROM dmanager_userprofile JOIN name_email_list ON dmanager_userprofile.user_id=name_email_list.id ORDER BY id desc);
+-----------------------------
+--#This query is for extracting raw tracking data from table 'dmanager_observation' based on a start date]
+--# Columns - id,user_id,activation_id,category,value,date_recorded,after_n_days,first_login
+
+COPY(WITH
+start_date as (select date '2016-12-22'),
+user_cohort_name as (SELECT dmanager_userprofile_cohort.userprofile_id as chuser_id, dmanager_cohortgroup.name as cohort_name FROM dmanager_userprofile_cohort LEFT OUTER JOIN dmanager_cohortgroup ON dmanager_userprofile_cohort.cohortgroup_id=dmanager_cohortgroup.id),
+obs_table as (SELECT dmanager_observation.id as id, dmanager_observation.user_id as user_id, int_value, float_value, dmanager_observation.date_recorded, auth_user.date_joined, user_cohort_name.cohort_name, dmanager_observation.ctype_id FROM dmanager_observation JOIN user_cohort_name ON dmanager_observation.user_id=user_cohort_name.chuser_id JOIN auth_user ON dmanager_observation.user_id=auth_user.id  WHERE date_recorded >= (select date from start_date)),
+food_table as (SELECT id, user_id, float_value as value, date_recorded, 'food'::text as category, date_joined, cohort_name FROM obs_table WHERE ctype_id=4 AND float_value >= 100),
+activity_table as (SELECT id, user_id, int_value as value, date_recorded, 'activity'::text as category, date_joined, cohort_name FROM obs_table WHERE ctype_id=3 AND int_value >=100),
+weight_table as (SELECT id, user_id, float_value as value, date_recorded, 'weight'::text as category, date_joined, cohort_name FROM obs_table WHERE ctype_id=2),
+glucose_table as (SELECT id, user_id, int_value as value, date_recorded, 'glucose'::text as category, date_joined, cohort_name FROM obs_table WHERE ctype_id=1),
+insulin_table as (SELECT id, user_id, float_value as value, date_recorded, 'insulin'::text as category, date_joined, cohort_name FROM obs_table WHERE ctype_id=6),
+hba1c_table as (SELECT id, user_id, float_value as value, date_recorded, 'hba1c'::text as category, date_joined, cohort_name FROM obs_table WHERE ctype_id=7),
+--cholesterol_table as (SELECT user_id, count(user_id) as cholesterol_count FROM obs_table WHERE ctype_id IN (8,9,10,11,12) GROUP BY user_id HAVING count(user_id) > 0),
+hemoglobin_table as (SELECT id, user_id, float_value as value, date_recorded, 'hemoglobin'::text as category, date_joined, cohort_name FROM obs_table WHERE ctype_id=13)
+SELECT * FROM food_table
+UNION ALL
+SELECT * FROM activity_table
+UNION ALL
+SELECT * FROM weight_table
+UNION ALL
+SELECT * FROM glucose_table
+UNION ALL
+SELECT * FROM insulin_table
+UNION ALL
+SELECT * FROM hba1c_table
+UNION ALL
+SELECT * FROM hemoglobin_table) TO '/tmp/habits_backend_tracking_data_22Dec2016_22May2017.csv' DELIMITER ',' CSV HEADER;
+
+---------------------------------------------------------------------------------
+##This query to find out user_email, ph number of users who tracked food more than 10 times
+WITH
+selected_users as (SELECT user_id, category, COUNT(user_id) as number_of_times_tracked FROM habits_backend_tracking_data_22dec2016_22may2017_cleaned_ver1 WHERE category ILIKE 'food' AND cohort_name ILIKE 'INDMISC' GROUP BY user_id, category HAVING COUNT(user_id) > 10 ORDER BY user_id, category DESC)
+SELECT selected_users.user_id, auth_user.email, dmanager_userprofile.phone_number FROM selected_users JOIN auth_user ON auth_user.id=selected_users.user_id JOIN dmanager_userprofile ON dmanager_userprofile.user_id =selected_users.user_id;

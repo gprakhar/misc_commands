@@ -51,3 +51,5 @@ Create New tables with auto ranges of
 
 # SELECT  date_of::date FROM generate_series('2016-08-01', '2016-08-31', '1 day'::interval) date_of;
 # ALTER TABLE test_date_week_group ADD COLUMN value int NOT NULL DEFAULT 1;
+-----
+
